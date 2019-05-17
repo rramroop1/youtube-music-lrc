@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Create lyrics for mobile from YouTube music videos | YTLRC.com</title>
+        <link rel="icon" type="image/png" href="/favicon.png">
+        <style type="text/css">
+        body { font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 16px; padding: 0; margin: 0; }
+        .container { width: 100%; max-width: 560px; margin: 0 auto; }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .form-input { width: 96%; background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 3px; color: #333; }
+        .form-label { margin-top: 15px; font-size: 80%; color: #666; display: block; margin-bottom: 5px; }
+        .btn { width: 100%; margin-top: 15px; padding: 15px; border-radius: 3px; color: #fff; font-weight: bold; background-color: #ff0800; border: 1px solid #ff0800; cursor: pointer; font-size: 16px; }
+        .btn:hover { background-color: #ff6500; border-color: #ff6500; }
+        #step_1 { padding: 20px; }
+        #step_2 { display: none;}
+        #yt_controls { display: block; width: 100%; border-bottom: 1px solid #ccc; background-color: #fff; position: fixed; top: 0; left: 0; }
+        #inner_controls { width: 100%; max-width: 560px; margin: 0 auto; }
+        #yt_player { float: left; max-height: 55px; overflow: hidden; background-color: #000; }
+        .btn-control { background-color: #fff; color: #000; border: 1px solid #ccc; border-top: 0; border-bottom: 0; padding: 15px 20px; float: left; cursor: pointer; }
+        .btn-control:hover { background-color: #ff6500; border-color: #ff6500; }
+        .yt_timers { float: left; margin: 10px 0px 0px 20px; font-size: 80%; color: #666; }
+        .yt_timers > div { margin-bottom: 3px; }
+        #input_lyrics { margin-top: 65px; padding-bottom: 50px; }
+        #lyrics_lines { margin-bottom: 20px; }
+        .float-left { float: left; }
+        .w-50 { width: 50%; diplay: block; }
+        .clearfix { clear: both; }
+        .lyrics { border: 1px solid #ddd; margin-bottom: 5px; padding: 15px 10px; font-size: 150%; }
+        .capture { cursor:pointer; }
+        .ok { border-color: green; color: #999; font-size: 100% !important; }
+        .btn-preview { background-color: #ccc; border-color: #ccc; color: #333; }
+        .btn-preview:hover { background-color: #bbb; border-color: #bbb; color: #fff; }
+        .btn-line { padding: 10px 15px; border-radius: 3px; color: #fff; font-weight: bold; background-color: #fff; border: 1px solid #ccc; cursor: pointer; font-size: 16px; }
+        .line_controls { text-align: right; margin-top: 10px; }
+        .ltime { display: block; font-size: 12px; color: #666; margin-bottom: 3px; }
+        </style>
+    </head>
+    <body>
+
+        <div class="container">
+
+            <div id="step_1">
+
+                <div class="logo">
+                    <a href="/">
+                        <img src="/logo.png" alt="YTLRC.COM" />
+                    </a>
+                    <span class="form-label">Create lyrics LRC files for mobile from YouTube music videos</span>
+                </div>
+
+                <span class="form-label">YouTube music video URL:</span>
+                <input type="text" id="yt_url" class="form-input" value="" required placeholder="https://www.youtube.com/watch?v=BbWBRnDK_AE" />
+
+                <span class="form-label">Song lyrics</span>
+                <textarea class="form-input" id="source_lyrics" required placeholder="copy and paste lyrics here" rows="10"></textarea>
+
+                <button type="button" id="btn_start" class="btn">Next &rsaquo;</button>
+
+            </div><!-- end step_1 -->
+
+            <div id="step_2">
+
+                <div id="yt_controls">
+                    <div id="inner_controls">
+                        <div id="yt_player"><div id="player"></div></div>
+                        <button type="button" class="btn-control" id="yt_play" data-action="play"><img src="/play.png" alt="Play" /></button><button type="button" class="btn-control" id="yt_stop"><img src="/stop.png" alt="Stop" /></button><button type="button" class="btn-control" id="yt_rewind"><img src="/rewind.png" alt="Rewind" /></button><button type="button" class="btn-control" id="yt_forward"><img src="/forward.png" alt="forward" /></button>
+                        <div class="yt_timers">
+                            <div>Runtime: <span id="yt_runtime"></span></div>
+                            <div>Current time: <span id="yt_curtime">00:00.00</span></div>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+
+                <div id="input_lyrics">
+                    <div id="lyrics_lines"></div>
+                    <button type="button" id="lrc_download" class="btn">Download</button>
+                </div>
+
+            </div><!-- end step_2 -->
+
+        </div><!-- end container -->
+        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <script type="text/javascript">
+
+            var player;
+            var timestamp_interval;
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            var ytcHeight = jQuery('#yt_controls').height();
+            var cHeight = jQuery('.container').height();
+            var vWidth = ((vHeight*16/9));
+            var vHeight = ytcHeight;
+
+            jQuery(document).ready(function() {
+
+                jQuery(document).on('click', '#btn_start', function(e) {
+
+                    var yturl = jQuery('#yt_url').val();
+                    var ytvid = extractVideoID(yturl);
+                    player.loadVideoById(ytvid);
+                    player.stopVideo();
+
+                    var lines = jQuery('#source_lyrics').val().split(/\n/);
+                    
+                    if(yturl.trim() == "") { alert('YouTube music video url cannot be empty.'); return false; }
+                    if(ytvid == false) { alert('YouTube url does not contain the video ID.'); return false; }
+                    if(lines == false) { alert('Please add your lyrics to continue.'); return false; }
+
+                    for (var i = 0; i < lines.length; i++) {
+                        
+                        if (/\S/.test(lines[i])) {
+                        
+                            //output.push($.trim(lines[i]));
+                            var html = '<div id="line-'+i+'" data-id="'+i+'" data-time="" class="lyrics">';
+                            html += '<div class="capture"><span class="ltime">00:00.00</span> '
+                            html += '<span class="text">'+$.trim(lines[i])+'</span></div>';
+                            html += '</div>';
+                            jQuery('#lyrics_lines').append(html);
+                        }
+                    }
+
+                    jQuery('#step_1').hide();
+                    jQuery('#step_2').show();
+                });
+
+                jQuery(document).on('click', '#yt_play', function(e) {
+                    
+                    var el = jQuery(this);
+                    var action = el.attr('data-action');
+
+                    if(action == "pause") {
+
+                        player.pauseVideo();
+                        clearInterval(timestamp_interval);
+                        el.attr('data-action', 'play');
+                        el.find('img').attr('src', '/play.png');
+                        el.find('img').attr('alt', 'Play');
+                    }
+                    else {
+                        
+                        player.playVideo();
+                        el.attr('data-action', 'pause');
+                        el.find('img').attr('src', '/pause.png');
+                        el.find('img').attr('alt', 'Pause');
+                    }
+                });
+
+                jQuery(document).on('click', '#yt_stop', function(e) {
+                        player.stopVideo();
+                        clearInterval(timestamp_interval);
+                        jQuery('#yt_curtime').html('00:00.00');
+                });
+
+                jQuery(document).on('click', '#yt_rewind', function(e) {
+
+                    var seconds = (player.getCurrentTime()-5);
+                    player.seekTo(seconds, true);
+
+                });
+                jQuery(document).on('click', '#yt_forward', function(e) {
+
+                        var seconds = (player.getCurrentTime()+5);
+                        player.seekTo(seconds, true);
+                });
+
+                jQuery(document).on('click', '.capture', function(e) {
+
+                    var el = jQuery(this).closest('div.lyrics');
+                    var id = el.attr('data-id');
+                    var cur_time = player.getCurrentTime();
+                    var result = convertTime(cur_time);
+                    el.attr('data-time', (result));
+                    el.find('span.ltime').html('&#10004; '+result);
+                    el.addClass('ok');
+                    
+                    if(el.find('div.line_controls').length == 0) {
+                        
+                        html = '<div class="line_controls">';
+                        html += '<button type="button" data-id="'+id+'" class="btn-line line-minus"><img src="/minus.png" alt="-" /></button> ';
+                        html += '<button type="button" data-id="'+id+'" class="btn-line line-plus"><img src="/plus.png" alt="+" /></button> ';
+                        html += '<button type="button" data-id="'+id+'" class="btn-line line-play"><img src="/play.png" alt="Play" /></button>';
+                        html += '</div>';
+
+                        el.append(html);
+                    }
+                });
+
+                jQuery(document).on('click', '.line-minus', function(e) {
+
+                    var el = jQuery(this);
+                    var id = el.attr('data-id');
+                    var ctime = jQuery('#line-'+id).attr('data-time'); 
+                    var secs = adjustTime(ctime, 'minus', 1); 
+                    var result = convertTime(secs); 
+                    jQuery('#line-'+id).attr('data-time', result);
+                    jQuery('#line-'+id).find('span.ltime').html('&#10004; '+result);
+                });
+
+                jQuery(document).on('click', '.line-plus', function(e) {
+
+                    var el = jQuery(this);
+                    var id = el.attr('data-id');
+                    var ctime = jQuery('#line-'+id).attr('data-time'); 
+                    var secs = adjustTime(ctime, 'plus', 1); 
+                    var result = convertTime(secs); 
+                    jQuery('#line-'+id).attr('data-time', result);
+                    jQuery('#line-'+id).find('span.ltime').html('&#10004; '+result);
+                });
+
+                jQuery(document).on('click', '.line-play', function(e) {
+
+                    var ctime = jQuery(this).closest("div.lyrics").attr('data-time');
+                    player.seekTo(adjustTime(ctime, 'plus', 0));
+
+                });
+
+                jQuery(document).on('click', '#lrc_download', function(e) {
+
+                    var lines = jQuery('.lyrics');
+                    var outputtext = '';
+
+                    jQuery.each(lines, function(i, el) {
+
+                        var id = jQuery(el).attr('data-id');
+                        var ctime = jQuery(el).attr('data-time');
+                        var lline = jQuery(el).find('span.text').text();
+                        
+                        outputtext += "["+ctime+"]"+lline+"\n";
+                    });
+
+                    download('my_lyrics.lrc', outputtext);
+                });
+
+            });
+
+            function onYouTubeIframeAPIReady() {
+                
+                player = new YT.Player('player', {
+                height: 50,
+                width: 100,
+                playerVars: { controls: 0, disablekb: 1, fs: 0, modestbranding: 1 },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
+
+            function onPlayerReady(event) {
+                
+            }
+
+            function onPlayerStateChange(event) {
+                
+                if (event.data == YT.PlayerState.PLAYING) {
+                
+                    var vduration = player.getDuration();
+                    jQuery('#yt_runtime').html(convertTime(vduration));
+
+                    jQuery('#yt_play').attr('data-action', 'pause');
+                    jQuery('#yt_play').find('img').attr('src', '/pause.png');
+                    jQuery('#yt_play').find('img').attr('alt', 'Pause');
+
+                    timestamp_interval = setInterval(function() {  
+                
+                        var cur_time = player.getCurrentTime();                
+                        jQuery('#yt_curtime').html(convertTime(cur_time));
+                
+                    }, 100);
+                }
+                else {
+                
+                    clearInterval(timestamp_interval);
+                    jQuery('#yt_play').attr('data-action', 'play');
+                    jQuery('#yt_play').find('img').attr('src', '/play.png');
+                    jQuery('#yt_play').find('img').attr('alt', 'Play');
+                }
+            }
+
+            function convertTime(time) {
+
+                var split = time.toString();
+                var s2 = split.split(".");
+                var s3 = s2[1].substr(0, 2);
+                var date = new Date(null);
+                date.setSeconds(time); // specify value for SECONDS here
+                var result = date.toISOString().substr(14, 6);
+                var output = result +''+ s3;
+
+                return output;
+            }
+
+            function adjustTime(time, o, v) {
+
+                var b = time.split('.'); 
+                var a = b[0].split(':'); 
+
+                if ( a.length == 2 ) {
+                    var seconds = (+a[0]) * 60 + (+a[1]); 
+                }
+                else {
+                    var seconds = (a[0]) * 60 * 60 + (a[1]) * 60 + (a[2]); 
+                }
+
+                if(o=="minus") { seconds = (seconds-v); }
+                if(o=="plus") { seconds = (seconds+v); }
+
+                return seconds+'.'+b[1];
+            }
+
+            function download(filename, data) {
+        
+                var blob = new Blob([data], {type: 'text/plain'});
+
+                if(window.navigator.msSaveOrOpenBlob) {
+                    
+                    window.navigator.msSaveBlob(blob, filename);
+                }
+                else {
+                    
+                    var elem = window.document.createElement('a');
+                    elem.href = window.URL.createObjectURL(blob);
+                    elem.download = filename;        
+                    document.body.appendChild(elem);
+                    elem.click();        
+                    document.body.removeChild(elem);
+                }
+            }
+
+            function extractVideoID(url) {
+                
+                var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
+                var match = url.match(regExp);
+                
+                if ( match && match[7].length == 11 ){
+                
+                    return match[7];
+                }
+                
+                return false;
+            }
+
+        </script>
+
+    </body>
+</html>
