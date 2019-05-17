@@ -44,8 +44,8 @@
             <div id="step_1">
 
                 <div class="logo">
-                    <a href="/">
-                        <img src="/logo.png" alt="YTLRC.COM" />
+                    <a href="/youtube-music-lrc/">
+                        <img src="/youtube-music-lrc/logo.png" alt="YTLRC.COM" />
                     </a>
                     <span class="form-label">Create lyrics LRC files for mobile from YouTube music videos</span>
                 </div>
@@ -65,7 +65,7 @@
                 <div id="yt_controls">
                     <div id="inner_controls">
                         <div id="yt_player"><div id="player"></div></div>
-                        <button type="button" class="btn-control" id="yt_play" data-action="play"><img src="/play.png" alt="Play" /></button><button type="button" class="btn-control" id="yt_stop"><img src="/stop.png" alt="Stop" /></button><button type="button" class="btn-control" id="yt_rewind"><img src="/rewind.png" alt="Rewind" /></button><button type="button" class="btn-control" id="yt_forward"><img src="/forward.png" alt="forward" /></button>
+                        <button type="button" class="btn-control" id="yt_play" data-action="play"><img src="/youtube-music-lrc/play.png" alt="Play" /></button><button type="button" class="btn-control" id="yt_stop"><img src="/youtube-music-lrc/stop.png" alt="Stop" /></button><button type="button" class="btn-control" id="yt_rewind"><img src="/youtube-music-lrc/rewind.png" alt="Rewind" /></button><button type="button" class="btn-control" id="yt_forward"><img src="/youtube-music-lrc/forward.png" alt="forward" /></button>
                         <div class="yt_timers">
                             <div>Runtime: <span id="yt_runtime"></span></div>
                             <div>Current time: <span id="yt_curtime">00:00.00</span></div>
@@ -183,9 +183,9 @@
                     if(el.find('div.line_controls').length == 0) {
                         
                         html = '<div class="line_controls">';
-                        html += '<button type="button" data-id="'+id+'" class="btn-line line-minus"><img src="/minus.png" alt="-" /></button> ';
-                        html += '<button type="button" data-id="'+id+'" class="btn-line line-plus"><img src="/plus.png" alt="+" /></button> ';
-                        html += '<button type="button" data-id="'+id+'" class="btn-line line-play"><img src="/play.png" alt="Play" /></button>';
+                        html += '<button type="button" data-id="'+id+'" class="btn-line line-minus"><img src="/youtube-music-lrc/minus.png" alt="-" /></button> ';
+                        html += '<button type="button" data-id="'+id+'" class="btn-line line-plus"><img src="/youtube-music-lrc/plus.png" alt="+" /></button> ';
+                        html += '<button type="button" data-id="'+id+'" class="btn-line line-play"><img src="/youtube-music-lrc/play.png" alt="Play" /></button>';
                         html += '</div>';
 
                         el.append(html);
